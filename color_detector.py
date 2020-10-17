@@ -13,10 +13,16 @@ else:
 print('Detecting color in %d equally sized horizontal sections' % N_SPLITS)
 
 
+def downscale(img, scale):
+    width = int(img.shape[1] * scale)
+    height = int(img.shape[0] * scale)
+    dim = (width, height)
+    return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+
 def findDominantColor(img_hsv):
-    BLACK_THRESHOLD = 36
-    SAT_THRESHOLD = 21
-    WHITE_THRESHOLD = 165
+    BLACK_THRESHOLD = 50
+    SAT_THRESHOLD = 50
+    WHITE_THRESHOLD = 150
     color_counter = {'white':0, 'black':0, 'gray':0,
                      'red':0, 'orange':0, 'yellow':0, 'green':0,
                      'cyan':0, 'blue':0,'magenta':0, 'pink':0}
@@ -38,19 +44,19 @@ def findDominantColor(img_hsv):
                         color_counter['white'] += 1
                 
                 else:
-                    if 0 <= hue < 20 or 340 <= hue <= 360:
+                    if 0 <= hue < 10 or 170 <= hue <= 180:
                         color_counter['red'] += 1
-                    elif 20 <= hue < 40:
+                    elif 10 <= hue < 20:
                         color_counter['orange']  += 1
-                    elif 40 <= hue < 70:
+                    elif 20 <= hue < 35:
                         color_counter['yellow'] += 1
-                    elif 70 <= hue < 160:
+                    elif 35 <= hue < 80:
                         color_counter['green'] += 1
-                    elif 160 <= hue < 190:
+                    elif 80 <= hue < 95:
                         color_counter['cyan'] += 1
-                    elif 190 <= hue < 260:
+                    elif 95 <= hue < 130:
                         color_counter['blue'] += 1
-                    elif 260 <= hue < 320:
+                    elif 130 <= hue < 160:
                         color_counter['magenta'] += 1
                     else:
                         color_counter['pink'] += 1
@@ -62,21 +68,32 @@ def findDominantColor(img_hsv):
 # cap = cv2.VideoCapture('/home/mike/duckietown/RH3/driving_straight_line.mp4') # For testing
 cap = cv2.VideoCapture(2) 
 
+
 while(True):
     # Capture frame-by-frame
-    ret, frame = cap.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    if ret:
-        print('Frame read correctly, detecting colors')
-        rows = frame.shape[0]
-        drow = rows // N_SPLITS
-        diff = rows - N_SPLITS*drow
-        for i in range(N_SPLITS):
-            start = i*drow
-            end = (i+1)*drow + ((i+2)*drow > rows)*diff
-            color = findDominantColor( frame[start:end, :] )
-            print('In section %d the color is mostly %s' % (i+1, color))
-    else:
-        print('Frame not read correctly')
+    try:
+        ret, frame = cap.read()
+        frame = downscale(frame, 0.3)
+        frame = cv2.GaussianBlur(frame, (1,1), 0)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        print(frame.shape)
+        if ret:
+            print('Frame read correctly, detecting colors')
+            rows = frame.shape[0]
+            drow = rows // N_SPLITS
+            diff = rows - N_SPLITS*drow
+            for i in range(N_SPLITS):
+                start = i*drow
+                end = (i+1)*drow + ((i+2)*drow > rows)*diff
+                color = findDominantColor( frame[start:end, frame.shape[1]//3:-frame.shape[1]//3] )
+                print('In section %d the color is mostly %s' % (i+1, color))
+        else:
+            print('Frame not read correctly')
 
-    sleep(1)
+        sleep(1)
+
+    except KeyboardInterrupt:
+        break
+
+print('Releasing video capture')
+cap.release()
