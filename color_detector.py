@@ -29,7 +29,6 @@ def findDominantColor(img_hsv):
     
     for y in range(img_hsv.shape[0]):
         for x in range(img_hsv.shape[1]):
-            # print(img_hsv[y,x])
             hue = img_hsv[y,x][0]
             sat = img_hsv[y,x][1]
             value = img_hsv[y,x][2]
@@ -64,10 +63,7 @@ def findDominantColor(img_hsv):
     return sorted(color_counter.items(), key=lambda x:x[1], reverse=True)[0][0]
 
 
-
-# cap = cv2.VideoCapture('/home/mike/duckietown/RH3/driving_straight_line.mp4') # For testing
 cap = cv2.VideoCapture(2) 
-
 
 while(True):
     # Capture frame-by-frame
@@ -76,9 +72,9 @@ while(True):
         frame = downscale(frame, 0.3)
         frame = cv2.GaussianBlur(frame, (1,1), 0)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        print(frame.shape)
         if ret:
             print('Frame read correctly, detecting colors')
+            result = ''
             rows = frame.shape[0]
             drow = rows // N_SPLITS
             diff = rows - N_SPLITS*drow
@@ -86,7 +82,8 @@ while(True):
                 start = i*drow
                 end = (i+1)*drow + ((i+2)*drow > rows)*diff
                 color = findDominantColor( frame[start:end, frame.shape[1]//3:-frame.shape[1]//3] )
-                print('In section %d the color is mostly %s' % (i+1, color))
+                result += 'In section {} the color is mostly {}\n'.format(i+1, color)
+            print(result)
         else:
             print('Frame not read correctly')
 
