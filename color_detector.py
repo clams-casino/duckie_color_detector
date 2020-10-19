@@ -19,6 +19,15 @@ def downscale(img, scale):
     dim = (width, height)
     return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
+def white_balance(img):
+    result = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    avg_a = np.average(result[:, :, 1])
+    avg_b = np.average(result[:, :, 2])
+    result[:, :, 1] = result[:, :, 1] - ((avg_a - 128) * (result[:, :, 0] / 255.0) * 1.1)
+    result[:, :, 2] = result[:, :, 2] - ((avg_b - 128) * (result[:, :, 0] / 255.0) * 1.1)
+    result = cv2.cvtColor(result, cv2.COLOR_LAB2BGR)
+    return result
+
 def findDominantColor(img_hsv):
     BLACK_THRESHOLD = 50
     SAT_THRESHOLD = 50
@@ -71,7 +80,9 @@ while(True):
         ret, frame = cap.read()
         frame = downscale(frame, 0.3)
         frame = cv2.GaussianBlur(frame, (1,1), 0)
+        frame = white_balance(frame)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        
         if ret:
             print('Frame read correctly, detecting colors')
             result = ''
